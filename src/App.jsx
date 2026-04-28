@@ -50,13 +50,20 @@ function parseAmount(value) {
 }
 
 // 日付文字列をDateオブジェクトに変換する
-// 「2024/01/15」「2024/01/15 12:00:00」「2024-01-15」などに対応
+// 「2026/3/31 19:28」のような月・日がゼロ埋めなし形式にも対応
 function parseDate(value) {
   if (!value) return null;
-  // 日付部分のみ抽出（時刻・スペースを除去してからスラッシュをハイフンへ）
-  const dateOnly = String(value).trim().split(/[\s　T]/)[0].replace(/\//g, '-');
-  const d = new Date(`${dateOnly}T00:00:00`);
-  return isNaN(d.getTime()) ? null : d;
+  // 時刻部分を除去して日付のみ取り出す（例: "2026/3/31 19:28" → "2026/3/31"）
+  const rawDate = String(value).trim().split(/[\s　T]/)[0];
+  // スラッシュまたはハイフン区切りで年月日に分割
+  const sep = rawDate.includes('/') ? '/' : '-';
+  const parts = rawDate.split(sep);
+  if (parts.length !== 3) return null;
+  // 月・日を必ず2桁にゼロ埋めしてISO形式に変換（"2026-3-31" → "2026-03-31"）
+  const [y, m, d] = parts;
+  const iso = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+  const date = new Date(`${iso}T00:00:00`);
+  return isNaN(date.getTime()) ? null : date;
 }
 
 // 金額を「¥1,200」形式の日本円表記に変換する
