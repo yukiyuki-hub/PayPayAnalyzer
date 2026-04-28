@@ -64,12 +64,12 @@ function formatCurrency(amount) {
   return `¥${Math.round(amount).toLocaleString('ja-JP')}`;
 }
 
-// 1〜3位に対応するラベルを返す（それ以外は数字のみ）
-function getRankLabel(rank) {
-  if (rank === 1) return '1位';
-  if (rank === 2) return '2位';
-  if (rank === 3) return '3位';
-  return `${rank}位`;
+// 順位に対応するバッジクラスを返す
+function getRankBadgeClass(rank) {
+  if (rank === 1) return 'rank-badge rank-badge-1';
+  if (rank === 2) return 'rank-badge rank-badge-2';
+  if (rank === 3) return 'rank-badge rank-badge-3';
+  return 'rank-badge';
 }
 
 // -----------------------------------------------
@@ -222,96 +222,113 @@ export default function App() {
     : 0;
 
   return (
-    <div className="container">
-      <h1 className="title">PayPay 出金ランキング分析</h1>
-
-      {/* ── CSVアップロード ── */}
-      <section className="card">
-        <h2 className="section-title">CSVファイルを選択</h2>
-        <input
-          type="file"
-          accept=".csv"
-          onChange={handleFileUpload}
-          className="file-input"
-        />
-        {fileName && (
-          <p className="file-name">読込済: {fileName}（{dataCount} 件）</p>
-        )}
-      </section>
-
-      {/* ── 期間指定 & 分析ボタン ── */}
-      <section className="card">
-        <h2 className="section-title">分析期間を指定</h2>
-        <div className="date-row">
-          <label className="date-label">
-            開始日
-            <input
-              type="date"
-              value={startDate}
-              onChange={e => setStartDate(e.target.value)}
-              className="date-input"
-            />
-          </label>
-          <span className="date-sep">〜</span>
-          <label className="date-label">
-            終了日
-            <input
-              type="date"
-              value={endDate}
-              onChange={e => setEndDate(e.target.value)}
-              className="date-input"
-            />
-          </label>
+    <>
+      {/* ── PayPayスタイルのヘッダー ── */}
+      <header className="pp-header">
+        <div className="pp-header-logo">
+          PayPay<span>出金ランキング分析</span>
         </div>
-        <button className="analyze-btn" onClick={handleAnalyze}>
-          分析する
-        </button>
-      </section>
+      </header>
 
-      {/* ── エラー表示 ── */}
-      {error && (
-        <div className="error-box" role="alert">
-          {error}
-        </div>
-      )}
+      <div className="container">
+        <h1 className="page-title">利用履歴 出金ランキング</h1>
 
-      {/* ── 分析結果 ── */}
-      {results && (
+        {/* ── CSVアップロード ── */}
         <section className="card">
-          {/* 出金合計 */}
-          <div className="total-box">
-            <span className="total-label">期間内の出金合計</span>
-            <span className="total-value">{formatCurrency(totalAmount)}</span>
+          <p className="section-title">STEP 1 ― CSVファイルを選択</p>
+          <div className="upload-area">
+            <input
+              type="file"
+              accept=".csv"
+              onChange={handleFileUpload}
+            />
+            <div className="upload-icon">📂</div>
+            <p className="upload-text">クリックしてCSVをアップロード</p>
+            <p className="upload-hint">PayPay アプリからダウンロードした利用履歴CSVに対応</p>
           </div>
-
-          <h2 className="section-title">出金ランキング TOP{results.length}</h2>
-          <div className="table-wrapper">
-            <table className="ranking-table">
-              <thead>
-                <tr>
-                  <th className="col-rank">順位</th>
-                  <th className="col-vendor">取引先</th>
-                  <th className="col-amount">合計出金額</th>
-                  <th className="col-count">件数</th>
-                </tr>
-              </thead>
-              <tbody>
-                {results.map((item, index) => (
-                  <tr
-                    key={item.vendor}
-                    className={index < 3 ? `row-top${index + 1}` : ''}
-                  >
-                    <td className="col-rank">{getRankLabel(index + 1)}</td>
-                    <td className="col-vendor">{item.vendor}</td>
-                    <td className="col-amount">{formatCurrency(item.total)}</td>
-                    <td className="col-count">{item.count}件</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          {fileName && (
+            <p className="file-name">{fileName}（{dataCount} 件）</p>
+          )}
         </section>
-      )}
-    </div>
+
+        {/* ── 期間指定 & 分析ボタン ── */}
+        <section className="card">
+          <p className="section-title">STEP 2 ― 分析期間を指定</p>
+          <div className="date-row">
+            <label className="date-label">
+              開始日
+              <input
+                type="date"
+                value={startDate}
+                onChange={e => setStartDate(e.target.value)}
+                className="date-input"
+              />
+            </label>
+            <span className="date-sep">〜</span>
+            <label className="date-label">
+              終了日
+              <input
+                type="date"
+                value={endDate}
+                onChange={e => setEndDate(e.target.value)}
+                className="date-input"
+              />
+            </label>
+          </div>
+          <button className="analyze-btn" onClick={handleAnalyze}>
+            分析する
+          </button>
+        </section>
+
+        {/* ── エラー表示 ── */}
+        {error && (
+          <div className="error-box" role="alert">
+            {error}
+          </div>
+        )}
+
+        {/* ── 分析結果 ── */}
+        {results && (
+          <section className="card">
+            {/* 出金合計 */}
+            <div className="total-box">
+              <span className="total-label">期間内の支払い合計</span>
+              <span className="total-value">{formatCurrency(totalAmount)}</span>
+            </div>
+
+            <p className="section-title">出金ランキング TOP{results.length}</p>
+            <div className="table-wrapper">
+              <table className="ranking-table">
+                <thead>
+                  <tr>
+                    <th className="col-rank">順位</th>
+                    <th className="col-vendor">取引先</th>
+                    <th className="col-amount">合計出金額</th>
+                    <th className="col-count">件数</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {results.map((item, index) => (
+                    <tr
+                      key={item.vendor}
+                      className={index < 3 ? `row-top${index + 1}` : ''}
+                    >
+                      <td className="col-rank">
+                        <span className={getRankBadgeClass(index + 1)}>
+                          {index + 1}
+                        </span>
+                      </td>
+                      <td className="col-vendor">{item.vendor}</td>
+                      <td className="col-amount">{formatCurrency(item.total)}</td>
+                      <td className="col-count">{item.count}件</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        )}
+      </div>
+    </>
   );
 }
