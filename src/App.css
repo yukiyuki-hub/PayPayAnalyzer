@@ -266,6 +266,7 @@ body {
   align-items: flex-start;
   gap: 8px;
   line-height: 1.5;
+  white-space: pre-line;
 }
 
 .error-box::before {

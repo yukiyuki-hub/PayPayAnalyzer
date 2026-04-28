@@ -180,10 +180,12 @@ export default function App() {
       const date = parseDate(row[dateColIdx]);
       if (!date || date < start || date > end) continue;
 
-      // 取引種別が取得できる場合、「支払い」を含む行のみ対象にする
+      // 取引種別列がある場合、支払い関連の行のみ対象にする
+      // PayPayのCSVでは「支払い」「ストア払い」「コード払い」「決済」など表記が異なる場合がある
       if (typeColIdx !== -1) {
         const txType = String(row[typeColIdx] ?? '').trim();
-        if (!txType.includes('支払い')) continue;
+        const isPayment = txType.includes('支払') || txType.includes('払い') || txType.includes('決済');
+        if (!isPayment) continue;
       }
 
       // 出金金額を取得し、0または空欄の行はランキング対象外
@@ -208,7 +210,23 @@ export default function App() {
       .slice(0, 30);
 
     if (sorted.length === 0) {
-      setError('指定期間内に出金データが見つかりませんでした。期間を確認してください。');
+      // 診断情報：何が検出されたかをエラーメッセージに含める
+      const colInfo = [
+        `取引日列: 「${dateColIdx !== -1 ? headers[dateColIdx] : '未検出'}」`,
+        `金額列: 「${amountColIdx !== -1 ? headers[amountColIdx] : '未検出'}」`,
+        `取引先列: 「${vendorColIdx !== -1 ? headers[vendorColIdx] : '未検出'}」`,
+        `種別列: 「${typeColIdx !== -1 ? headers[typeColIdx] : '未検出'}」`,
+      ].join(' / ');
+
+      // 取引種別列のサンプル値を最大5種類表示
+      const sampleTypes = typeColIdx !== -1
+        ? [...new Set(dataRows.slice(0, 30).map(r => String(r[typeColIdx] ?? '').trim()))].filter(Boolean).slice(0, 5)
+        : [];
+      const typeInfo = sampleTypes.length > 0
+        ? `\n種別の値サンプル: 「${sampleTypes.join('」「')}」`
+        : '';
+
+      setError(`指定期間内に出金データが見つかりませんでした。\n\n${colInfo}${typeInfo}`);
       return;
     }
 
