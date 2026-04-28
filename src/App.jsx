@@ -8,6 +8,7 @@ const COLUMN_CANDIDATES = {
   date:   ['取引日', '取引日時', '日付', 'date'],
   amount: ['出金金額', '支払い金額', '出金金額(円)', '支払い金額(円)', 'amount', 'payment'],
   vendor: ['取引先', '店舗名', '支払先', 'vendor', 'store'],
+  type:   ['取引種別', '取引内容', '種別', 'type'],
 };
 
 // ヘッダー行（文字列配列）から対象フィールドの列インデックスを返す
@@ -148,6 +149,8 @@ export default function App() {
     const dateColIdx   = detectColIndex(headers, COLUMN_CANDIDATES.date);
     const amountColIdx = detectColIndex(headers, COLUMN_CANDIDATES.amount);
     const vendorColIdx = detectColIndex(headers, COLUMN_CANDIDATES.vendor);
+    // 取引種別列（存在しない場合は -1 のまま → 全行を対象にする）
+    const typeColIdx   = detectColIndex(headers, COLUMN_CANDIDATES.type);
 
     if (dateColIdx === -1) {
       setError(`取引日の列が見つかりませんでした。対応列名: ${COLUMN_CANDIDATES.date.join(' / ')}`);
@@ -176,6 +179,12 @@ export default function App() {
       // 日付チェック：期間外の行はスキップ
       const date = parseDate(row[dateColIdx]);
       if (!date || date < start || date > end) continue;
+
+      // 取引種別が取得できる場合、「支払い」を含む行のみ対象にする
+      if (typeColIdx !== -1) {
+        const txType = String(row[typeColIdx] ?? '').trim();
+        if (!txType.includes('支払い')) continue;
+      }
 
       // 出金金額を取得し、0または空欄の行はランキング対象外
       const amount = parseAmount(row[amountColIdx]);
